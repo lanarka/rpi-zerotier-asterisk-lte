@@ -1,6 +1,6 @@
 # rpi-zerotier-asterisk-lte
 
-Few simple steps to bake simple portable PBX 
+A few simple steps to bake a simple portable PBX 
 
 ## Features
 - 4G LTE connection
