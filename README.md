@@ -75,10 +75,30 @@ sudo fail2ban-client status asterisk
 sudo dpkg-reconfigure tzdata
 ```
 
-### Configure iptables
-```sh
-sudo iptables -A INPUT -p udp --dport 5060 -j ACCEPT
-sudo iptables -A OUTPUT -p udp --sport 5060 -j ACCEPT
+## Configure Firewall (iptables)
+Allow only LAN + operator IPs:
+```bash
+# allow localhost
+sudo iptables -A INPUT -i lo -j ACCEPT
+sudo iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+
+# allow SSH
+sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+
+# allow SIP from operator + LAN
+sudo iptables -A INPUT -p udp -s OPERATOR_IP --dport 5060 -j ACCEPT
+sudo iptables -A INPUT -p udp -s 192.168.0.0/24 --dport 5060 -j ACCEPT
+
+# allow RTP (media) ports
+sudo iptables -A INPUT -p udp -s 192.168.0.0/24 --dport 10000:20000 -j ACCEPT
+sudo iptables -A INPUT -p udp -s OPERATOR_IP --dport 10000:20000 -j ACCEPT
+
+# drop all other SIP/RTP
+sudo iptables -A INPUT -p udp --dport 5060 -j DROP
+sudo iptables -A INPUT -p udp --dport 10000:20000 -j DROP
+
+# install iptables-persistent to save rules
+sudo apt install -y iptables-persistent
 sudo iptables-save > /etc/iptables/rules.v4
 ```
 ---
