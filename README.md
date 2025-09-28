@@ -75,6 +75,11 @@ sudo fail2ban-client status asterisk
 sudo dpkg-reconfigure tzdata
 ```
 
+### Configure iptables
+sudo iptables -A INPUT -p udp --dport 5060 -j ACCEPT
+sudo iptables -A OUTPUT -p udp --sport 5060 -j ACCEPT
+sudo iptables-save > /etc/iptables/rules.v4
+
 ---
 
 ## Install Asterisk
