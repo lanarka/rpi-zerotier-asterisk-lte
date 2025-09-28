@@ -1,99 +1,134 @@
 # rpi-zerotier-asterisk-lte
 
-A few simple steps to bake a simple portable PBX 
+A simple guide to turning your Raspberry Pi into a **portable PBX** with **4G LTE connectivity** and a secure private network using **ZeroTier**.  
+This setup is great for small offices, home labs, or mobile deployments.
+
+---
 
 ## Features
-- 4G LTE connection
-- secured private network
+- 4G LTE connectivity
+- secure private network (ZeroTier)
 - internal extensions
-- outgoing and incoming calls through VOIP operator
-
+- incoming and outgoing calls via VoIP operator
 
 ![Rpi4](images/photo.jpg)
 
+---
 
-### What you will need
+## What You Will Need
 
-- RaspberryPi 3 or 4 (I have tested RPi4 with 4GB RAM)
-- a power supply for the RaspberryPi 
-- USB dongle (I am using the Huawei E3372)
-- SD Card
-- sim card with internet connection
+- Raspberry Pi 3 or 4 (tested with RPi4, 4GB RAM recommended)  
+- power supply for Raspberry Pi  
+- USB LTE modem (tested: **Huawei E3372**)  
+- microSD card (16GB or larger)  
+- SIM card with a data plan  
+- internet access (Wi-Fi or Ethernet, at least for initial setup)
 
+---
 
-### Prepare SD card
-#### Download image and burn SD card
+## Preparing the SD Card
+
+### 1. Download image and flash SD card
 ```sh
-	wget https://downloads.raspberrypi.com/raspios_arm64/images/raspios_arm64-2023-05-03/2023-05-03-raspios-bullseye-arm64.img.xz
-	xz -d -T0 2023-05-03-raspios-bullseye-arm64.img.xz
-	sudo dd bs=4M if=2023-05-03-raspios-bullseye-arm64.img of=/dev/mmcblk0
+wget https://downloads.raspberrypi.com/raspios_arm64/images/raspios_arm64-2023-05-03/2023-05-03-raspios-bullseye-arm64.img.xz
+xz -d -T0 2023-05-03-raspios-bullseye-arm64.img.xz
+sudo dd bs=4M if=2023-05-03-raspios-bullseye-arm64.img of=/dev/mmcblk0 status=progress conv=fsync
 ```
-#### Setup password and enable SSH
-- Create password hash
+
+### 2. Enable SSH and set password
+- Generate password hash:
 ```sh
-		echo 'mypassword' | openssl passwd -6 -stdin
+echo 'mypassword' | openssl passwd -6 -stdin
 ```
-- Create empty file `ssh` 
-- Create file `userconf` with content
-		`pi:PASSWORDHASH`
-- Mount SD card and copy both files to /boot folder
+- Create an empty file `ssh`  
+- Create a file `userconf` with the following content:
+  ```
+  pi:PASSWORDHASH
+  ```
+- Mount the SD card and copy both files into the **/boot** partition
 
-### Instalation
+---
 
-#### Prepare operating system
+## System Installation
 
+### Update and upgrade system
 ```sh
-	sudo apt update && sudo apt upgrade
-	sudo reboot
+sudo apt update && sudo apt upgrade -y
+sudo reboot
 ```
 
-#### Install prerequisities
- 
+### Install prerequisites
 ```sh
-	sudo apt install joe
+sudo apt install fail2ban iptables-persistent tcpdump -y
 ```
-#### Install asterisk
+
+### Configure fail2ban
 ```sh
-	sudo apt install asterisk asterisk-dahdi
+sudo cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
+sudo systemctl restart fail2ban
+systemctl status fail2ban
+sudo fail2ban-client status asterisk
 ```
 
-#### Configure asterisk
-- Copy `extensions.conf` and `sip.conf` to `/etc/asterisk`
-
+### Configure timezone
 ```sh
-	asterisk -r
-```
-```	
-	> sip show peers
-	> core restart now
-	> sip show registry
+sudo dpkg-reconfigure tzdata
 ```
 
-#### Restart asterisk
+---
+
+## Install Asterisk
+
+Asterisk is an open-source PBX that provides VoIP functionality.  
+Install with:
 ```sh
-	sudo systemctl restart asterisk
-
+sudo apt install asterisk asterisk-dahdi -y
 ```
 
-#### Install zerotier
+## Configure Asterisk
+
+[asterisk-pbx-howto](https://github.com/lanarka/asterisk-pbx-howto)
+
+---
+
+## Install and Configure ZeroTier
+
+ZeroTier allows you to create an encrypted virtual network between devices.
+
+### Installation
 ```sh
-   curl -s https://install.zerotier.com | sudo bash
+curl -s https://install.zerotier.com | sudo bash
 ```
 
-#### Setup zerotier
-```sh   
-   sudo service zerotier-one status
-   sudo zerotier-cli join NETWORK-ID
+### Join a network
+```sh
+sudo zerotier-cli join NETWORK-ID
 ```
 
-- invite user ID in zerotier control panel
-- check zerotier ethernet adapter
-- try ping to other device
+👉 Then:  
+- authorize your Raspberry Pi in **ZeroTier Central** (web console)  
+- check service status:
+```sh
+sudo service zerotier-one status
+```
+- test connectivity by pinging another device in the network
 
-#### Connect 4G LTE dongle
+---
 
-- no additional drivers needed for E3372
-- check adapter eth1 configuration (dhcp)
-- check internet connection
-- reboot
+## 📶 Connect 4G LTE Modem
+
+- No additional drivers required for **Huawei E3372**  
+- Check if modem appears as **eth1** (DHCP)  
+- Test internet connectivity:
+```sh
+ping 8.8.8.8
+```
+- Reboot device:
+```sh
+sudo reboot
+```
+
+---
+
+Done! You now have a **mobile Asterisk PBX server** with LTE connectivity, securely accessible over ZeroTier.
 
