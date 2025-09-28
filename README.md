@@ -76,10 +76,11 @@ sudo dpkg-reconfigure tzdata
 ```
 
 ### Configure iptables
+```sh
 sudo iptables -A INPUT -p udp --dport 5060 -j ACCEPT
 sudo iptables -A OUTPUT -p udp --sport 5060 -j ACCEPT
 sudo iptables-save > /etc/iptables/rules.v4
-
+```
 ---
 
 ## Install Asterisk
@@ -110,7 +111,7 @@ curl -s https://install.zerotier.com | sudo bash
 sudo zerotier-cli join NETWORK-ID
 ```
 
-👉 Then:  
+Then:  
 - authorize your Raspberry Pi in **ZeroTier Central** (web console)  
 - check service status:
 ```sh
